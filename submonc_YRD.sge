@@ -1,0 +1,65 @@
+#!/bin/bash
+#$ -pe ib 4 
+#$ -l h_rt=00:30:00
+#$ -l h_vmem=1G
+#$ -l placement=scatter
+#$ -cwd -V
+#$ -m e
+#$ -M ml19h2d@leeds.ac.uk
+##############################################################
+#### THIS IS AN EXAMPLE SCRIPT TO DEMONSTRATE HOW TO      ####
+#### SUBMIT A STANDARD monc JOB WITHOUT A RESTART         ####
+#### Script assumes that there are directories called     ####
+#### monc_stdout , checkpoint_files and diagnostic_files  ####
+#### If these do not exist, MONC will fail                ####
+##############################################################
+
+echo "START TIME: $(date)"
+
+module purge
+module load user
+module switch intel gnu/native
+module switch openmpi mvapich2
+module load netcdf hdf5 fftw fcm
+
+if [ ! -d checkpoint_files ]; then mkdir checkpoint_files; fi
+if [ ! -d monc_stdout ]; then mkdir monc_stdout; fi
+if [ ! -d diagnostic_files ]; then mkdir diagnostic_files; fi
+
+# Allow multi-threading on cray
+# export MPICH_MAX_THREAD_SAFETY=multiple
+
+# MVAPICH2 RUNTIME VARIABLES
+MONC_THREAD_MULTIPLE=0
+MV2_ENABLE_AFFINITY=0
+MV2_SHOW_CPU_BINDING=1
+MV2_USE_THREAD_WARNING=0
+export MONC_THREAD_MULTIPLE MV2_ENABLE_AFFINITY MV2_SHOW_CPU_BINDING \
+       MV2_USE_THREAD_WARNING
+
+# Set the number of threads to 1
+#   This prevents any system libraries from automatically
+#   using threading.
+export OMP_NUM_THREADS=1
+
+# Set the submission filename:
+export SUBMISSION_SCRIPT_NAME='submonc_YRD_casim.sge'
+
+# Standard output log file:
+# export MONC_OUT='monc_out/YRD_control.out'
+
+# standard output directory
+export STDOUT_DIR=monc_dout
+
+
+ulimit -c unlimited
+
+config_path='monc/moncconfig_1600.mcf'
+
+mpirun -np 4 ./build/bin/monc_driver.exe --config=$config_path  --checkpoint_file=$checkpoint_fn &> monc_out/output_YRD_1
+
+
+run_monc
+
+
+echo "END TIME: $(date)"
