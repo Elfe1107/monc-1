@@ -5,7 +5,8 @@
 module purge
 module load user
 module switch intel gnu/8.3.0
-#module switch openmpi mvapich2
+module switch openmpi mvapich2
 module load fftw netcdf hdf5 fcm
 
-fcm make -j4 -f fcm-make/monc-arc4-gnu.cfg
+#fcm make -j4 -f fcm-make/monc-arc4-gnu.cfg
+fcm make -j4 -f fcm-make/monc-arc4-gnu.cfg -f fcm-make/casim_socrates.cfg
